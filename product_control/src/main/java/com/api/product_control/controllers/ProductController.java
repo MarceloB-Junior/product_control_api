@@ -5,11 +5,14 @@ import com.api.product_control.models.ProductModel;
 import com.api.product_control.services.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,6 +20,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class ProductController {
 
     final ProductService productService;
@@ -37,15 +41,15 @@ public class ProductController {
     }
 
     @GetMapping("/products")
-    public ResponseEntity<List<ProductModel>> getAllProducts(){
-        List<ProductModel> productsList = productService.findAll();
-        if(!productsList.isEmpty()){
-            for(ProductModel product : productsList){
+    public ResponseEntity<Page<ProductModel>> getAllProducts(@PageableDefault (sort = "idProduct", direction = Sort.Direction.ASC) Pageable pageable){
+        Page<ProductModel> productsPage = productService.findAll(pageable);
+        if(!productsPage.isEmpty()){
+            for(ProductModel product : productsPage){
                 UUID id = product.getIdProduct();
                 product.add(linkTo(methodOn(ProductController.class).getOneProduct(id)).withSelfRel());
             }
         }
-        return ResponseEntity.status(HttpStatus.OK).body(productsList);
+        return ResponseEntity.status(HttpStatus.OK).body(productsPage);
     }
 
     @GetMapping("/products/{id}")
@@ -54,7 +58,7 @@ public class ProductController {
         if(productOpt.isEmpty()){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found.");
         }
-        productOpt.get().add(linkTo(methodOn(ProductController.class).getAllProducts()).withRel("Products List"));
+        productOpt.get().add(linkTo(methodOn(ProductController.class).getAllProducts(Pageable.unpaged())).withRel("Products List"));
         return ResponseEntity.status(HttpStatus.OK).body(productOpt.get());
     }
 

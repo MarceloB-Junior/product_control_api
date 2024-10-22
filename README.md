@@ -9,10 +9,18 @@ A aplicação tem como objetivo oferecer uma solução robusta e escalável para
 ### Principais Funcionalidades:
 
 - **Gerenciamento Completo**: Permite a criação, leitura, atualização e exclusão de produtos, proporcionando um controle total sobre os registros.
+  
 - **Validação de Dados**: Utiliza a validação Bean do Jakarta para garantir que os dados inseridos estejam corretos e atendam aos critérios definidos, como campos obrigatórios e formatos válidos.
+
 - **Verificação de Conflitos**: Implementa lógica para verificar se um produto com o mesmo nome já está em uso antes da criação, evitando duplicações indesejadas.
+
 - **Documentação Clara**: A API é documentada de forma clara, facilitando a integração por parte de outros desenvolvedores.
+
 - **Suporte a HATEOAS**: A aplicação segue os princípios HATEOAS (Hypermedia as the Engine of Application State), permitindo que os clientes naveguem pela API utilizando links fornecidos nas respostas.
+
+- **Paginação de Resultados**: Oferece suporte à paginação ao recuperar a lista de produtos, permitindo uma navegação eficiente em grandes conjuntos de dados.
+
+- **Links Auto-referenciais**: Cada produto retornado inclui links auto-referenciais e links para a lista de produtos, melhorando a usabilidade e a navegação na API.
 
 A **Product Control API** é ideal para ser utilizada em sistemas de e-commerce, inventário ou qualquer aplicação que necessite de um gerenciamento eficiente de produtos. Com sua arquitetura baseada em microserviços e conformidade com as melhores práticas do setor, ela pode ser facilmente escalada e mantida.
 
@@ -122,9 +130,8 @@ Corpo da Requisição:
 **DELETE** `/products/{id}`
 
 ## Estrutura do Projeto
-
 ```
-product-control/
+product_control/
 │
 ├── src/
 │   ├── main/
@@ -132,6 +139,7 @@ product-control/
 │   │   │   └── com/
 │   │   │       └── api/
 │   │   │           └── product_control/
+│   │   │               ├── configs/
 │   │   │               ├── controllers/
 │   │   │               ├── dtos/
 │   │   │               ├── models/
