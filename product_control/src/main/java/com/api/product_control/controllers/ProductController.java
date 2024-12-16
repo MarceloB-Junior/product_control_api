@@ -1,6 +1,8 @@
 package com.api.product_control.controllers;
 
 import com.api.product_control.dtos.ProductRecordDto;
+import com.api.product_control.exceptions.ProductAlreadyExistsException;
+import com.api.product_control.exceptions.ProductNotFoundException;
 import com.api.product_control.models.ProductModel;
 import com.api.product_control.services.ProductService;
 import jakarta.validation.Valid;
@@ -21,6 +23,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
+@RequestMapping("/products")
 public class ProductController {
 
     final ProductService productService;
@@ -29,19 +32,19 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @PostMapping("/products")
+    @PostMapping
     public ResponseEntity<Object> saveProduct(@RequestBody @Valid ProductRecordDto productRecordDto){
         if(productService.existsByName(productRecordDto.name())){
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Conflict: the name of this product is already in use!");
+            throw new ProductAlreadyExistsException("Conflict: the name of this product is already in use!");
         }
         var productModel = new ProductModel();
         BeanUtils.copyProperties(productRecordDto, productModel);
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.save(productModel));
     }
 
-    @GetMapping("/products")
-    public ResponseEntity<Page<ProductModel>> getAllProducts(@PageableDefault (sort = "idProduct", direction = Sort.Direction.ASC) Pageable pageable){
+    @GetMapping
+    public ResponseEntity<Page<ProductModel>> getAllProducts(@PageableDefault (sort = "idProduct", direction = Sort.Direction.ASC)
+                                                                 Pageable pageable){
         Page<ProductModel> productsPage = productService.findAll(pageable);
         if(!productsPage.isEmpty()){
             for(ProductModel product : productsPage){
@@ -52,33 +55,33 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.OK).body(productsPage);
     }
 
-    @GetMapping("/products/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<Object> getOneProduct(@PathVariable(value = "id")UUID id){
         Optional<ProductModel> productOpt = productService.findById(id);
         if(productOpt.isEmpty()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found.");
+            throw new ProductNotFoundException("Product not found.");
         }
         productOpt.get().add(linkTo(methodOn(ProductController.class).getAllProducts(Pageable.unpaged())).withRel("Products List"));
         return ResponseEntity.status(HttpStatus.OK).body(productOpt.get());
     }
 
-    @PutMapping("/products/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<Object> updateProduct(@PathVariable(value = "id") UUID id,
                                                 @RequestBody @Valid ProductRecordDto productRecordDto){
         Optional<ProductModel> productOpt = productService.findById(id);
         if(productOpt.isEmpty()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found.");
+            throw new ProductNotFoundException("Product not found.");
         }
         var productModel = productOpt.get();
         BeanUtils.copyProperties(productRecordDto,productModel);
         return ResponseEntity.status(HttpStatus.OK).body(productService.save(productModel));
     }
 
-    @DeleteMapping("/products/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Object> deleteProduct(@PathVariable(value = "id") UUID id){
         Optional<ProductModel> productOpt = productService.findById(id);
         if(productOpt.isEmpty()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found.");
+            throw new ProductNotFoundException("Product not found.");
         }
         productService.delete(productOpt.get());
         return ResponseEntity.status(HttpStatus.OK).body("Product deleted successfully.");
