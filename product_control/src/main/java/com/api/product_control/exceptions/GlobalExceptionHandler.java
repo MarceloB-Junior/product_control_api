@@ -1,6 +1,6 @@
 package com.api.product_control.exceptions;
 
-import com.api.product_control.dtos.ExceptionRecordDto;
+import com.api.product_control.dtos.ExceptionsDto;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,36 +14,36 @@ import java.time.LocalDateTime;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ProductAlreadyExistsException.class)
-    public ResponseEntity<ExceptionRecordDto> handleProductAlreadyExists(@NotNull ProductAlreadyExistsException ex){
-        var exceptionRecordDto = new ExceptionRecordDto(
+    public ResponseEntity<ExceptionsDto> handleProductAlreadyExists(@NotNull ProductAlreadyExistsException ex){
+        var exceptionDto = new ExceptionsDto(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
                 "Conflict",
                 ex.getMessage()
         );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(exceptionRecordDto);
+        return new ResponseEntity<>(exceptionDto,HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<ExceptionRecordDto> handleProductNotFound(@NotNull ProductNotFoundException ex){
-        var exceptionRecordDto = new ExceptionRecordDto(
+    public ResponseEntity<ExceptionsDto> handleProductNotFound(@NotNull ProductNotFoundException ex){
+        var exceptionDto = new ExceptionsDto(
                 LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
                 "Not Found",
                 ex.getMessage()
         );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionRecordDto);
+        return new ResponseEntity<>(exceptionDto,HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<ExceptionRecordDto> handleGenericException(){
-        var exceptionRecordDto = new ExceptionRecordDto(
+    public ResponseEntity<ExceptionsDto> handleGenericException(){
+        var exceptionDto = new ExceptionsDto(
                 LocalDateTime.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Internal Server Error",
                 "An unexpected error occurred. Please try again later."
         );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionRecordDto);
+        return new ResponseEntity<>(exceptionDto,HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

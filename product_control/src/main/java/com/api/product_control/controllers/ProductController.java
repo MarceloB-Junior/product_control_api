@@ -1,6 +1,6 @@
 package com.api.product_control.controllers;
 
-import com.api.product_control.dtos.ProductRecordDto;
+import com.api.product_control.dtos.ProductDto;
 import com.api.product_control.exceptions.ProductAlreadyExistsException;
 import com.api.product_control.exceptions.ProductNotFoundException;
 import com.api.product_control.models.ProductModel;
@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -33,13 +32,13 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<Object> saveProduct(@RequestBody @Valid ProductRecordDto productRecordDto){
-        if(productService.existsByName(productRecordDto.name())){
+    public ResponseEntity<ProductModel> saveProduct(@RequestBody @Valid ProductDto productDto){
+        if(productService.existsByName(productDto.name())){
             throw new ProductAlreadyExistsException("Conflict: the name of this product is already in use!");
         }
         var productModel = new ProductModel();
-        BeanUtils.copyProperties(productRecordDto, productModel);
-        return ResponseEntity.status(HttpStatus.CREATED).body(productService.save(productModel));
+        BeanUtils.copyProperties(productDto, productModel);
+        return new ResponseEntity<>(productService.save(productModel), HttpStatus.CREATED);
     }
 
     @GetMapping
@@ -52,38 +51,31 @@ public class ProductController {
                 product.add(linkTo(methodOn(ProductController.class).getOneProduct(id)).withSelfRel());
             }
         }
-        return ResponseEntity.status(HttpStatus.OK).body(productsPage);
+        return ResponseEntity.ok(productsPage);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getOneProduct(@PathVariable(value = "id")UUID id){
-        Optional<ProductModel> productOpt = productService.findById(id);
-        if(productOpt.isEmpty()){
-            throw new ProductNotFoundException("Product not found.");
-        }
-        productOpt.get().add(linkTo(methodOn(ProductController.class).getAllProducts(Pageable.unpaged())).withRel("Products List"));
-        return ResponseEntity.status(HttpStatus.OK).body(productOpt.get());
+    public ResponseEntity<ProductModel> getOneProduct(@PathVariable(value = "id")UUID id){
+        ProductModel productModel = productService.findById(id)
+                        .orElseThrow(() -> new ProductNotFoundException("Product not found."));
+        productModel.add(linkTo(methodOn(ProductController.class).getAllProducts(Pageable.unpaged())).withRel("Products List"));
+        return ResponseEntity.ok(productModel);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> updateProduct(@PathVariable(value = "id") UUID id,
-                                                @RequestBody @Valid ProductRecordDto productRecordDto){
-        Optional<ProductModel> productOpt = productService.findById(id);
-        if(productOpt.isEmpty()){
-            throw new ProductNotFoundException("Product not found.");
-        }
-        var productModel = productOpt.get();
-        BeanUtils.copyProperties(productRecordDto,productModel);
-        return ResponseEntity.status(HttpStatus.OK).body(productService.save(productModel));
+    public ResponseEntity<ProductModel> updateProduct(@PathVariable(value = "id") UUID id,
+                                                @RequestBody @Valid ProductDto productDto){
+        ProductModel productModel = productService.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found."));
+        BeanUtils.copyProperties(productDto,productModel);
+        return ResponseEntity.ok(productService.save(productModel));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> deleteProduct(@PathVariable(value = "id") UUID id){
-        Optional<ProductModel> productOpt = productService.findById(id);
-        if(productOpt.isEmpty()){
-            throw new ProductNotFoundException("Product not found.");
-        }
-        productService.delete(productOpt.get());
-        return ResponseEntity.status(HttpStatus.OK).body("Product deleted successfully.");
+        ProductModel productModel = productService.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found."));
+        productService.delete(productModel);
+        return ResponseEntity.ok("Product deleted successfully.");
     }
 }
